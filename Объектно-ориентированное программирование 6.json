@@ -1,0 +1,101 @@
+import java.util.HashMap;
+import java.util.Map;
+
+public class Homework {
+
+    /**
+     * Класс документ - описывает структуру документа.
+     *
+     * Нужно спроектировать систему отчетов, которая будет формировать отчеты для документа.
+     *
+     * 1. Формирование PDF-файла (потенциально может быть несколько типов разметки PDF-файла).
+     * 2. Формирование JSON-файла с полями документа.
+     * 3. Формирование XML-файла с полями документа.
+     * 4. ... потенциально могут добавляться разные типы отчетов.
+     *
+     */
+
+    interface ReportGenerator {
+        byte[] generateReport(Document document);
+    }
+
+    static class PdfReportGenerator implements ReportGenerator {
+        @Override
+        public byte[] generateReport(Document document) {
+            // Логика генерации PDF
+            return ("PDF Report for Document ID: " + document.getId()).getBytes();
+        }
+    }
+
+    static class JsonReportGenerator implements ReportGenerator {
+        @Override
+        public byte[] generateReport(Document document) {
+            // Логика генерации JSON
+            return ("{ \"id\": " + document.getId() + ", \"number\": \"" + document.getNumber() + "\" }" ).getBytes();
+        }
+    }
+
+    static class XmlReportGenerator implements ReportGenerator {
+        @Override
+        public byte[] generateReport(Document document) {
+            // Логика генерации XML
+            return ("<document><id>" + document.getId() + "</id><number>" + document.getNumber() + "</number></document>").getBytes();
+        }
+    }
+
+    static class ReportService {
+
+        private final Map<String, ReportGenerator> reportGenerators = new HashMap<>();
+
+        public ReportService() {
+            // Регистрация доступных генераторов отчетов
+            registerReportGenerator("pdf", new PdfReportGenerator());
+            registerReportGenerator("json", new JsonReportGenerator());
+            registerReportGenerator("xml", new XmlReportGenerator());
+        }
+
+        public void registerReportGenerator(String reportType, ReportGenerator generator) {
+            reportGenerators.put(reportType, generator);
+        }
+
+        public byte[] createReport(Document document, String reportType) {
+            ReportGenerator generator = reportGenerators.get(reportType);
+            if (generator == null) {
+                throw new UnsupportedOperationException("Report type not supported: " + reportType);
+            }
+            return generator.generateReport(document);
+        }
+    }
+
+    static class Document {
+        private long id;
+        private String number;
+
+        public Document(long id, String number) {
+            this.id = id;
+            this.number = number;
+        }
+
+        public long getId() {
+            return id;
+        }
+
+        public String getNumber() {
+            return number;
+        }
+    }
+
+    public static void main(String[] args) {
+        Document document = new Document(1, "DOC-12345");
+        ReportService reportService = new ReportService();
+
+        byte[] pdfReport = reportService.createReport(document, "pdf");
+        System.out.println(new String(pdfReport));
+
+        byte[] jsonReport = reportService.createReport(document, "json");
+        System.out.println(new String(jsonReport));
+
+        byte[] xmlReport = reportService.createReport(document, "xml");
+        System.out.println(new String(xmlReport));
+    }
+}
